@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banco de Alimentos Guadalajara</title>
+  <style>
+    /* Reset y estilo general */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f2f4f8;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(90deg, #ff7b00, #ff9a3c);
+      color: #fff;
+      text-align: center;
+      padding: 2rem 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      letter-spacing: 1px;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    h2 {
+      color: #ff7b00;
+      border-left: 5px solid #ff7b00;
+      padding-left: 10px;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+    }
+
+    p, li {
+      font-size: 1.05rem;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    ul li {
+      background: #fff;
+      border-left: 5px solid #ff7b00;
+      margin: 0.8rem 0;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    ul li:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Formulario */
+    form {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+
+    form:hover {
+      transform: scale(1.02);
+    }
+
+    label {
+      margin: 0.5rem 0;
+      font-weight: bold;
+      width: 100%;
+      text-align: left;
+      font-size: 1.05rem;
+    }
+
+    select, input[type="file"] {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      background: #f9f9f9;
+      cursor: pointer;
+      transition: border 0.3s;
+    }
+
+    select:focus, input[type="file"]:focus {
+      border-color: #ff7b00;
+      outline: none;
+    }
+
+    .custom-file-upload {
+      background-color: #ff7b00;
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-block;
+      font-weight: bold;
+      transition: background 0.3s, transform 0.2s;
+      text-align: center;
+    }
+
+    .custom-file-upload:hover {
+      background-color: #e66c00;
+      transform: scale(1.05);
+    }
+
+    input[type="submit"] {
+      background-color: #111;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s, transform 0.2s;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #333;
+      transform: scale(1.05);
+    }
+
+    /* Footer */
+    footer {
+      background-color: #111;
+      color: #fff;
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-top: 3rem;
+    }
+
+    footer p {
+      font-size: 0.95rem;
+      margin: 0.5rem 0;
+    }
+
+    a { color: #ff7b00; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      header h1 { font-size: 2rem; }
+      main { padding: 1rem; }
+      input[type="submit"], .custom-file-upload { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Banco de Alimentos Guadalajara</h1>
+  </header>
+
+  <main>
+    <p>Bienvenido al sitio web del <strong>Banco de Alimentos Guadalajara</strong>. Aquí puedes encontrar información sobre nuestras actividades, cómo donar y cómo ayudar a combatir el hambre en nuestra comunidad.</p>
+
+    <h2>¿Quiénes somos?</h2>
+    <p>El Banco de Alimentos Guadalajara es una organización sin fines de lucro dedicada a recolectar y distribuir alimentos a personas en situación de vulnerabilidad en la ciudad de Guadalajara y sus alrededores.</p>
+
+    <h2>¿Cómo puedes ayudar?</h2>
+    <ul>
+      <li><strong>Donaciones monetarias:</strong> Puedes hacer donaciones a través de nuestro sitio web o en persona en nuestras oficinas.</li>
+      <li><strong>Donaciones de alimentos:</strong> Aceptamos donaciones de alimentos no perecederos en nuestras instalaciones.</li>
+      <li><strong>Voluntariado:</strong> Únete a nuestro equipo de voluntarios para ayudar en la recolección y distribución de alimentos.</li>
+    </ul>
+
+    <h2>Subir archivo</h2>
+    <form id="uploadForm">
+      <label for="tipo">Selecciona el tipo de archivo:</label>
+      <select id="tipo" name="tipo" required>
+        <option value="">-- Elegir --</option>
+        <option value="administradores">Administrador</option>
+        <option value="areas">Área</option>
+        <option value="voluntarios">Voluntario</option>
+        <option value="asignaciones">Asignación</option>
+        <option value="movimientos">Movimiento</option>
+      </select>
+
+      <label for="file-upload" class="custom-file-upload">
+        Seleccionar archivo
+      </label>
+      <input id="file-upload" type="file" name="file" required />
+
+      <input type="submit" value="Subir archivo" />
+    </form>
+
+    <h2>Contacto</h2>
+    <p>Si deseas más información o quieres ponerte en contacto con nosotros, envíanos un correo electrónico a <a href="mailto:contacto@bancoalimentosgdl.org"><strong>contacto@bancoalimentosgdl.org</strong></a>.</p>
+  </main>
+
+  <footer>
+    <p>© 2025 Banco de Alimentos Guadalajara</p>
+    <p>Juntos podemos combatir el hambre</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const tipoSelect = document.getElementById('tipo');
+    const archivoInput = document.getElementById('file-upload');
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      if (!tipoSelect.value) {
+        alert('Por favor selecciona un tipo de archivo');
+        return;
+      }
+
+      if (archivoInput.files.length === 0) {
+        alert('Selecciona un archivo primero');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', archivoInput.files[0]);
+
+      // Cambia este ID según el administrador que quieras
+      const idAdministrador = 1;
+
+      let url;
+      if (tipoSelect.value === 'administradores') {
+        url = `/api/administradores/${idAdministrador}/uploads`;
+      } else {
+        url = `/api/${tipoSelect.value}/uploads`;
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        console.log(data);
+        alert(JSON.stringify(data));
+      } catch (error) {
+        console.error('Error al subir archivo:', error);
+        alert('Ocurrió un error al subir el archivo');
+      }
+    });
+  </script>
+
+</body>
+</html>

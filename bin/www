@@ -1,0 +1,14 @@
+
+const app = require('../app');
+const http = require('http');
+
+// Puerto
+const port = process.env.PORT || 3000;
+app.set('port', port);
+
+// Servidor
+const server = http.createServer(app);
+
+server.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
+});
