@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const asignacion = sequelize.define('Asignacion', {
+  const Asignacion = sequelize.define('Asignacion', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -17,7 +17,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     fecha_asignacion: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: false,
+      defaultValue: DataTypes.NOW 
     },
     estado: {
       type: DataTypes.BOOLEAN,
@@ -29,5 +30,5 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false
   });
 
-  return asignacion;
+  return Asignacion;
 };
