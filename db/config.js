@@ -13,10 +13,10 @@ const configuracion = {
 async function conectarBD() {
     try {
         const conexion = await mysql.createConnection(configuracion);
-        console.log("✅ Conexión establecida a la BD");
+        console.log(" Conexión establecida a la BD");
         return conexion;
     } catch (error) {
-        console.error("❌ No se pudo conectar a la BD:", error.message);
+        console.error(" No se pudo conectar a la BD:", error.message);
         throw error;
     }
 }
@@ -26,10 +26,10 @@ async function desconectarDB(conexion) {
     try {
         if (conexion) {
             await conexion.end();
-            console.log("🔒 Conexión cerrada");
+            console.log(" Conexión cerrada");
         }
     } catch (error) {
-        console.error("⚠️ Error al cerrar la conexión:", error.message);
+        console.error(" Error al cerrar la conexión:", error.message);
     }
 }
 

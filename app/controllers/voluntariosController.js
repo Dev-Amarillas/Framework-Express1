@@ -1,119 +1,184 @@
-const con = require("../../db/config");
+const { conectarBD, desconectarDB } = require("../../db/config.js");
 const { validationResult } = require("express-validator");
 const path = require("path");
-const multer = require("multer");
+const fs = require("fs");
 
-// Configuración de Multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/voluntarios"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
-
-// --- Listar voluntarios ---
+// =============================
+// --- Listar todos los voluntarios ---
+// =============================
 async function index(req, res) {
   let c;
   try {
-    c = await con.conectarBD();
+    c = await conectarBD();
     const [rows] = await c.execute("SELECT * FROM voluntarios");
+    if (!rows.length)
+      return res.status(404).json({ mensaje: "No hay voluntarios registrados" });
     res.json({ datos: rows });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al obtener voluntarios: " + error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al obtener voluntarios", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
+// =============================
 // --- Crear voluntario ---
+// =============================
 async function store(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
+  if (!errors.isEmpty())
+    return res.status(400).json({ errores: errors.array() });
 
-  const { nombre, telefono, correo, direccion, id_area } = req.body;
+  const { nombre, apellido_pat, apellido_mat, telefono, direccion, estado } = req.body;
+  const foto = req.file ? req.file.filename : null;
+  const estadoBoolean = estado === 'true'? 1 : 0;
+
+  console.log("Body recibido:", req.body);
+  console.log("Archivo recibido:", req.file);
+
   let c;
   try {
-    c = await con.conectarBD();
+    c = await conectarBD();
+
+    // Inserta los datos en MySQL
     const [result] = await c.execute(
-      "INSERT INTO voluntarios (nombre, telefono, correo, direccion, id_area) VALUES (?, ?, ?, ?, ?)",
-      [nombre, telefono, correo, direccion, id_area]
+      "INSERT INTO voluntarios (nombre, apellido_pat, apellido_mat, telefono, direccion, estado, foto) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [nombre, apellido_pat, apellido_mat, telefono, direccion, estadoBoolean, foto]
     );
-    res.json({ id: result.insertId, nombre, telefono, correo, direccion, id_area });
+
+    res.json({
+      id: result.insertId,
+      nombre,
+      apellido_pat,
+      apellido_mat,
+      telefono,
+      direccion,
+      estado,
+      foto,
+    });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al crear voluntario: " + error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al crear voluntario", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
-// --- Mostrar voluntario ---
+// =============================
+// --- Mostrar voluntario por ID ---
+// =============================
 async function show(req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
-
   const { id } = req.params;
   let c;
   try {
-    c = await con.conectarBD();
+    c = await conectarBD();
     const [rows] = await c.execute("SELECT * FROM voluntarios WHERE id = ?", [id]);
-    if (rows.length === 0) return res.status(404).json({ mensaje: "Voluntario no encontrado" });
-    res.json(rows[0]);
+    if (!rows.length)
+      return res.status(404).json({ mensaje: "Voluntario no encontrado" });
+    res.json({ datos: rows[0] });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al buscar voluntario: " + error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al buscar voluntario", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
+// =============================
 // --- Actualizar voluntario ---
+// =============================
 async function update(req, res) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
+  if (!errors.isEmpty())
+    return res.status(400).json({ errores: errors.array() });
 
   const { id } = req.params;
-  const { nombre, telefono, correo, direccion, id_area } = req.body;
+  const { nombre, apellido_pat, apellido_mat, telefono, direccion, estado } = req.body;
+  const nuevaFoto = req.file ? req.file.filename : undefined;
+
   let c;
   try {
-    c = await con.conectarBD();
-    const [result] = await c.execute(
-      "UPDATE voluntarios SET nombre = ?, telefono = ?, correo = ?, direccion = ?, id_area = ? WHERE id = ?",
-      [nombre, telefono, correo, direccion, id_area, id]
-    );
-    if (result.affectedRows === 0) return res.status(404).json({ mensaje: "Voluntario no encontrado" });
-    res.json({ id, nombre, telefono, correo, direccion, id_area });
+    c = await conectarBD();
+
+    // Obtener la foto actual
+    const [rows] = await c.execute("SELECT foto FROM voluntarios WHERE id = ?", [id]);
+    if (!rows.length)
+      return res.status(404).json({ mensaje: "Voluntario no encontrado" });
+
+    const fotoAnterior = rows[0].foto;
+
+    // Si hay nueva foto, eliminar la anterior
+    if (nuevaFoto && fotoAnterior) {
+      const oldPath = path.join("uploads", "voluntarios", fotoAnterior);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    // Preparar query dinámico
+    const query = nuevaFoto
+      ? "UPDATE voluntarios SET nombre=?, apellido_pat=?, apellido_mat=?, telefono=?, direccion=?, estado=?, foto=? WHERE id=?"
+      : "UPDATE voluntarios SET nombre=?, apellido_pat=?, apellido_mat=?, telefono=?, direccion=?, estado=? WHERE id=?";
+    const params = nuevaFoto
+      ? [nombre, apellido_pat, apellido_mat, telefono, direccion, estado, nuevaFoto, id]
+      : [nombre, apellido_pat, apellido_mat, telefono, direccion, estado, id];
+
+    const [result] = await c.execute(query, params);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ mensaje: "Voluntario no encontrado" });
+
+    const fotoFinal = nuevaFoto || fotoAnterior;
+
+    res.json({
+      id,
+      nombre,
+      apellido_pat,
+      apellido_mat,
+      telefono,
+      direccion,
+      estado,
+      foto: fotoFinal,
+    });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al actualizar voluntario: " + error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al actualizar voluntario", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
+// =============================
 // --- Eliminar voluntario ---
+// =============================
 async function destroy(req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
-
   const { id } = req.params;
   let c;
   try {
-    c = await con.conectarBD();
+    c = await conectarBD();
+
+    // Buscar foto existente
+    const [rows] = await c.execute("SELECT foto FROM voluntarios WHERE id = ?", [id]);
+    if (rows.length && rows[0].foto) {
+      const oldPath = path.join("uploads", "voluntarios", rows[0].foto);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    // Eliminar registro
     const [result] = await c.execute("DELETE FROM voluntarios WHERE id = ?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ mensaje: "Voluntario no encontrado" });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ mensaje: "Voluntario no encontrado" });
+
     res.json({ mensaje: "Voluntario eliminado correctamente", id });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al eliminar voluntario: " + error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al eliminar voluntario", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
-// --- Subir archivo ---
-async function uploadFile(req, res) {
-  if (!req.file) return res.status(400).json({ error: "No se subió ningún archivo" });
-  res.json({
-    mensaje: "Archivo subido correctamente",
-    nombreArchivo: req.file.filename,
-    ruta: path.join("uploads/voluntarios", req.file.filename)
-  });
-}
-
-module.exports = { index, store, show, update, destroy, uploadFile, upload };
+module.exports = { index, store, show, update, destroy };

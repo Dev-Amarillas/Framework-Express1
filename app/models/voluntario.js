@@ -62,6 +62,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
+        notEmpty: true,
         isUrl: true
       }
     }
@@ -70,5 +71,5 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false
   });
 
-  return Voluntario;
+  return voluntario;
 };

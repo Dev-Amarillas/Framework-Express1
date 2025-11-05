@@ -1,8 +1,9 @@
 const express = require('express');
-const router = express.Router();
-const asignacionesController = require("../app/controllers/asignacionesController");
-const { body, param } = require("express-validator");
+const asignacionesController = require('../app/controllers/asignacionesController');
+const { body, param } = require('express-validator');
 const upload = require('../app/middlewares/uploadMiddleware');
+
+const router = express.Router();
 
 // Validaciones
 const validarAsignacion = [

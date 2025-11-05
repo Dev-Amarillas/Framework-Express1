@@ -1,8 +1,8 @@
 const express = require('express');
+const areasController = require('../app/controllers/areasController');
+const { body, param } = require('express-validator');
+
 const router = express.Router();
-const areasController = require("../app/controllers/areasController");
-const { body, param } = require("express-validator");
-const upload = require('../app/middlewares/uploadMiddleware');
 
 // Validaciones
 const validarArea = [
@@ -29,8 +29,5 @@ router.get('/:id', validarID, areasController.show);
 router.post('/', validarArea, areasController.store);
 router.put('/:id', [...validarID, ...validarArea], areasController.update);
 router.delete('/:id', validarID, areasController.destroy);
-
-// Subida de archivos (por ejemplo, documentación del área)
-router.post('/uploads', upload.single('file'), areasController.uploadFile);
 
 module.exports = router;

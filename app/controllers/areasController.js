@@ -1,14 +1,7 @@
 const con = require("../../db/config");
 const { validationResult } = require("express-validator");
 const path = require("path");
-const multer = require("multer");
-
-// Configuración de Multer para subir archivos del área
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/areas"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
+const fs = require("fs");
 
 // --- Listar áreas ---
 async function index(req, res) {
@@ -30,18 +23,22 @@ async function store(req, res) {
   if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
 
   const { nombre, descripcion, estado } = req.body;
+
+  console.log('Body recibido:', req.body);
+  console.log('Archivo recibido:', req.file);
+
   let c;
   try {
-    c = await con.conectarBD();
+    c = await conectarBD();
     const [result] = await c.execute(
       "INSERT INTO areas (nombre, descripcion, estado) VALUES (?, ?, ?)",
       [nombre, descripcion, estado ?? 1]
     );
     res.json({ id: result.insertId, nombre, descripcion, estado: estado ?? 1 });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al crear área: " + error.message });
+    res.status(500).json({ mensaje: "Error al crear área: ", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await desconectarDB(c);
   }
 }
 
@@ -106,14 +103,4 @@ async function destroy(req, res) {
   }
 }
 
-// --- Subir archivo ---
-async function uploadFile(req, res) {
-  if (!req.file) return res.status(400).json({ error: "No se subió ningún archivo" });
-  res.json({
-    mensaje: "Archivo subido correctamente",
-    nombreArchivo: req.file.filename,
-    ruta: path.join("uploads/areas", req.file.filename)
-  });
-}
-
-module.exports = { index, store, show, update, destroy, uploadFile, upload };
+module.exports = { index, store, show, update, destroy,};
