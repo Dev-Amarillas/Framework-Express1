@@ -7,9 +7,9 @@ async function index(req, res) {
   try {
     c = await con.conectarBD();
     const [rows] = await c.execute("SELECT * FROM asignaciones");
-    res.json({ datos: rows });
+    res.json({ mensaje: "Listado de asignaciones", datos: rows });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al obtener asignaciones: " + error.message });
+    res.status(500).json({ mensaje: "Error al obtener asignaciones: " + error.message });
   } finally {
     await con.desconectarDB(c);
   }
@@ -23,21 +23,22 @@ async function store(req, res) {
   const { voluntario_id, area_id, estado } = req.body;
   let c;
   try {
-    c = await con.conectarBD();
+    const estadoFinal = estado === false || estado === "false" ? 0 : 1;
 
+    c = await con.conectarBD();
     const [result] = await c.execute(
       "INSERT INTO asignaciones (voluntario_id, area_id, estado) VALUES (?, ?, ?)",
-      [voluntario_id, area_id, estado ?? true]
+      [voluntario_id, area_id, estadoFinal]
     );
 
     const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [result.insertId]);
 
     res.status(201).json({
       mensaje: "Asignación creada correctamente",
-      datos: rows[0]
+      datos: rows[0],
     });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al crear asignación: " + error.message });
+    res.status(500).json({ mensaje: "Error al crear asignación: " + error.message });
   } finally {
     await con.desconectarDB(c);
   }
@@ -54,9 +55,9 @@ async function show(req, res) {
     c = await con.conectarBD();
     const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [id]);
     if (rows.length === 0) return res.status(404).json({ mensaje: "Asignación no encontrada" });
-    res.json(rows[0]);
+    res.json({ mensaje: "Asignación encontrada", datos: rows[0] });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al buscar asignación: " + error.message });
+    res.status(500).json({ mensaje: "Error al buscar asignación: " + error.message });
   } finally {
     await con.desconectarDB(c);
   }
@@ -71,10 +72,12 @@ async function update(req, res) {
   const { voluntario_id, area_id, estado } = req.body;
   let c;
   try {
+    const estadoFinal = estado === false || estado === "false" ? 0 : 1;
+
     c = await con.conectarBD();
     const [result] = await c.execute(
       "UPDATE asignaciones SET voluntario_id = ?, area_id = ?, estado = ? WHERE id = ?",
-      [voluntario_id, area_id, estado, id]
+      [voluntario_id, area_id, estadoFinal, id]
     );
 
     if (result.affectedRows === 0)
@@ -83,7 +86,7 @@ async function update(req, res) {
     const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [id]);
     res.json({ mensaje: "Asignación actualizada correctamente", datos: rows[0] });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al actualizar asignación: " + error.message });
+    res.status(500).json({ mensaje: "Error al actualizar asignación: " + error.message });
   } finally {
     await con.desconectarDB(c);
   }
@@ -103,7 +106,7 @@ async function destroy(req, res) {
       return res.status(404).json({ mensaje: "Asignación no encontrada" });
     res.json({ mensaje: "Asignación eliminada correctamente", id });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al eliminar asignación: " + error.message });
+    res.status(500).json({ mensaje: "Error al eliminar asignación: " + error.message });
   } finally {
     await con.desconectarDB(c);
   }
