@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       validate: {
         notEmpty: true,
-        isEmail: true,
+        is: /^[0-9]{10}$/i,
         len: [10, 10]
       }
     },

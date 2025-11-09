@@ -29,18 +29,19 @@ async function store(req, res) {
 
   let c;
   try {
-    c = await conectarBD();
+    c = await con.conectarBD(); // ✅ corregido
     const [result] = await c.execute(
       "INSERT INTO areas (nombre, descripcion, estado) VALUES (?, ?, ?)",
       [nombre, descripcion, estado ?? 1]
     );
     res.json({ id: result.insertId, nombre, descripcion, estado: estado ?? 1 });
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al crear área: ", detalle: error.message });
+    res.status(500).json({ mensaje: "Error al crear área", detalle: error.message });
   } finally {
-    if (c) await desconectarDB(c);
+    if (c) await con.desconectarDB(c); // ✅ corregido
   }
 }
+
 
 // --- Mostrar área ---
 async function show(req, res) {
@@ -92,15 +93,19 @@ async function destroy(req, res) {
   const { id } = req.params;
   let c;
   try {
-    c = await con.conectarBD();
+    c = await con.conectarBD(); // ✅ corregido
     const [result] = await c.execute("DELETE FROM areas WHERE id = ?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ mensaje: "Área no encontrada" });
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ mensaje: "Área no encontrada" });
+
     res.json({ mensaje: "Área eliminada correctamente", id });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al eliminar área: " + error.message });
+    res.status(500).json({ mensaje: "Error al eliminar área", detalle: error.message });
   } finally {
-    await con.desconectarDB(c);
+    if (c) await con.desconectarDB(c); // ✅ corregido
   }
 }
+
 
 module.exports = { index, store, show, update, destroy,};

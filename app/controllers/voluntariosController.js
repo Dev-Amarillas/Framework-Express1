@@ -97,8 +97,9 @@ async function update(req, res) {
     return res.status(400).json({ errores: errors.array() });
 
   const { id } = req.params;
-  const { nombre, apellido_pat, apellido_mat, telefono, direccion, estado } = req.body;
+  const { nombre, apellido_pat, apellido_mat, telefono, direccion, estado, foto_url } = req.body;
   const nuevaFoto = req.file ? req.file.filename : undefined;
+  const estadoBoolean = estado === 'true' || estado === true ? 1 : 0;
 
   let c;
   try {
@@ -112,24 +113,22 @@ async function update(req, res) {
     const fotoAnterior = rows[0].foto;
 
     // Si hay nueva foto, eliminar la anterior
-    if (nuevaFoto && fotoAnterior) {
+    if (nuevaFoto && fotoAnterior && fotoAnterior !== foto_url) {
       const oldPath = path.join("uploads", "voluntarios", fotoAnterior);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
 
-    // Preparar query dinámico
-    const query = nuevaFoto
-      ? "UPDATE voluntarios SET nombre=?, apellido_pat=?, apellido_mat=?, telefono=?, direccion=?, estado=?, foto=? WHERE id=?"
-      : "UPDATE voluntarios SET nombre=?, apellido_pat=?, apellido_mat=?, telefono=?, direccion=?, estado=? WHERE id=?";
-    const params = nuevaFoto
-      ? [nombre, apellido_pat, apellido_mat, telefono, direccion, estado, nuevaFoto, id]
-      : [nombre, apellido_pat, apellido_mat, telefono, direccion, estado, id];
+    // Determinar qué foto conservar
+    const fotoFinal = nuevaFoto || foto_url || fotoAnterior;
 
-    const [result] = await c.execute(query, params);
+    // Actualizar registro
+    const [result] = await c.execute(
+      "UPDATE voluntarios SET nombre=?, apellido_pat=?, apellido_mat=?, telefono=?, direccion=?, estado=?, foto=? WHERE id=?",
+      [nombre, apellido_pat, apellido_mat, telefono, direccion, estadoBoolean, fotoFinal, id]
+    );
+
     if (result.affectedRows === 0)
       return res.status(404).json({ mensaje: "Voluntario no encontrado" });
-
-    const fotoFinal = nuevaFoto || fotoAnterior;
 
     res.json({
       id,
@@ -138,17 +137,20 @@ async function update(req, res) {
       apellido_mat,
       telefono,
       direccion,
-      estado,
+      estado: estadoBoolean,
       foto: fotoFinal,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ mensaje: "Error al actualizar voluntario", detalle: error.message });
+    console.error("❌ Error al actualizar voluntario:", error);
+    res.status(500).json({
+      mensaje: "Error al actualizar voluntario",
+      detalle: error.message,
+    });
   } finally {
     if (c) await desconectarDB(c);
   }
 }
+
 
 // =============================
 // --- Eliminar voluntario ---

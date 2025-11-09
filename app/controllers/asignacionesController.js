@@ -1,12 +1,25 @@
 const con = require("../../db/config");
 const { validationResult } = require("express-validator");
 
-// --- Listar asignaciones ---
+// --- Listar asignaciones (con nombres de voluntario y área) ---
 async function index(req, res) {
   let c;
   try {
     c = await con.conectarBD();
-    const [rows] = await c.execute("SELECT * FROM asignaciones");
+    const [rows] = await c.execute(`
+      SELECT 
+        a.id,
+        a.voluntario_id,
+        v.nombre AS nombre_voluntario,
+        a.area_id,
+        ar.nombre AS nombre_area,
+        a.estado,
+        a.fecha_asignacion
+      FROM asignaciones a
+      LEFT JOIN voluntarios v ON a.voluntario_id = v.id
+      LEFT JOIN areas ar ON a.area_id = ar.id
+      ORDER BY a.id DESC
+    `);
     res.json({ mensaje: "Listado de asignaciones", datos: rows });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al obtener asignaciones: " + error.message });
@@ -24,14 +37,27 @@ async function store(req, res) {
   let c;
   try {
     const estadoFinal = estado === false || estado === "false" ? 0 : 1;
-
     c = await con.conectarBD();
     const [result] = await c.execute(
       "INSERT INTO asignaciones (voluntario_id, area_id, estado) VALUES (?, ?, ?)",
       [voluntario_id, area_id, estadoFinal]
     );
 
-    const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [result.insertId]);
+    // Traer con nombres
+    const [rows] = await c.execute(`
+      SELECT 
+        a.id,
+        a.voluntario_id,
+        v.nombre AS nombre_voluntario,
+        a.area_id,
+        ar.nombre AS nombre_area,
+        a.estado,
+        a.fecha_asignacion
+      FROM asignaciones a
+      LEFT JOIN voluntarios v ON a.voluntario_id = v.id
+      LEFT JOIN areas ar ON a.area_id = ar.id
+      WHERE a.id = ?
+    `, [result.insertId]);
 
     res.status(201).json({
       mensaje: "Asignación creada correctamente",
@@ -44,17 +70,32 @@ async function store(req, res) {
   }
 }
 
-// --- Mostrar asignación ---
+// --- Mostrar asignación por ID ---
 async function show(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
-
   const { id } = req.params;
   let c;
   try {
     c = await con.conectarBD();
-    const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [id]);
-    if (rows.length === 0) return res.status(404).json({ mensaje: "Asignación no encontrada" });
+    const [rows] = await c.execute(`
+      SELECT 
+        a.id,
+        a.voluntario_id,
+        v.nombre AS nombre_voluntario,
+        a.area_id,
+        ar.nombre AS nombre_area,
+        a.estado,
+        a.fecha_asignacion
+      FROM asignaciones a
+      LEFT JOIN voluntarios v ON a.voluntario_id = v.id
+      LEFT JOIN areas ar ON a.area_id = ar.id
+      WHERE a.id = ?
+    `, [id]);
+
+    if (!rows.length)
+      return res.status(404).json({ mensaje: "Asignación no encontrada" });
+
     res.json({ mensaje: "Asignación encontrada", datos: rows[0] });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al buscar asignación: " + error.message });
@@ -67,13 +108,11 @@ async function show(req, res) {
 async function update(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
-
   const { id } = req.params;
   const { voluntario_id, area_id, estado } = req.body;
   let c;
   try {
     const estadoFinal = estado === false || estado === "false" ? 0 : 1;
-
     c = await con.conectarBD();
     const [result] = await c.execute(
       "UPDATE asignaciones SET voluntario_id = ?, area_id = ?, estado = ? WHERE id = ?",
@@ -83,7 +122,21 @@ async function update(req, res) {
     if (result.affectedRows === 0)
       return res.status(404).json({ mensaje: "Asignación no encontrada" });
 
-    const [rows] = await c.execute("SELECT * FROM asignaciones WHERE id = ?", [id]);
+    const [rows] = await c.execute(`
+      SELECT 
+        a.id,
+        a.voluntario_id,
+        v.nombre AS nombre_voluntario,
+        a.area_id,
+        ar.nombre AS nombre_area,
+        a.estado,
+        a.fecha_asignacion
+      FROM asignaciones a
+      LEFT JOIN voluntarios v ON a.voluntario_id = v.id
+      LEFT JOIN areas ar ON a.area_id = ar.id
+      WHERE a.id = ?
+    `, [id]);
+
     res.json({ mensaje: "Asignación actualizada correctamente", datos: rows[0] });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al actualizar asignación: " + error.message });
@@ -96,7 +149,6 @@ async function update(req, res) {
 async function destroy(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errores: errors.array() });
-
   const { id } = req.params;
   let c;
   try {
