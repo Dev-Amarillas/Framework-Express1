@@ -4,9 +4,6 @@ const administradoresController = require('../app/controllers/administradoresCon
 
 const router = express.Router();
 
-// =======================================
-// Rutas de administradores usando controladores
-// =======================================
 
 // GET: Listar todos los administradores
 router.get('/', administradoresController.index);
@@ -17,7 +14,7 @@ router.post('/', upload.single('imagen'), administradoresController.store);
 // GET: Mostrar administrador por ID
 router.get('/:id', administradoresController.show);
 
-// PUT: Actualizar administrador con imagen opcional
+// PUT: Actualizar administrador con imagen
 router.put('/:id', upload.single('imagen'), administradoresController.update);
 
 // DELETE: Eliminar administrador

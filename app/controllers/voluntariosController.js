@@ -3,9 +3,7 @@ const { validationResult } = require("express-validator");
 const path = require("path");
 const fs = require("fs");
 
-// =============================
-// --- Listar todos los voluntarios ---
-// =============================
+
 async function index(req, res) {
   let c;
   try {
@@ -23,9 +21,9 @@ async function index(req, res) {
   }
 }
 
-// =============================
+
 // --- Crear voluntario ---
-// =============================
+
 async function store(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -67,9 +65,9 @@ async function store(req, res) {
   }
 }
 
-// =============================
+
 // --- Mostrar voluntario por ID ---
-// =============================
+
 async function show(req, res) {
   const { id } = req.params;
   let c;
@@ -88,9 +86,9 @@ async function show(req, res) {
   }
 }
 
-// =============================
+
 // --- Actualizar voluntario ---
-// =============================
+
 async function update(req, res) {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -141,7 +139,7 @@ async function update(req, res) {
       foto: fotoFinal,
     });
   } catch (error) {
-    console.error("❌ Error al actualizar voluntario:", error);
+    console.error(" Error al actualizar voluntario:", error);
     res.status(500).json({
       mensaje: "Error al actualizar voluntario",
       detalle: error.message,
@@ -152,32 +150,39 @@ async function update(req, res) {
 }
 
 
-// =============================
 // --- Eliminar voluntario ---
-// =============================
+
 async function destroy(req, res) {
   const { id } = req.params;
   let c;
+
   try {
     c = await conectarBD();
 
-    // Buscar foto existente
+    //  Borrar primero las asignaciones del voluntario
+    await c.execute("DELETE FROM asignaciones WHERE voluntario_id = ?", [id]);
+
+    //  Buscar y eliminar la foto
     const [rows] = await c.execute("SELECT foto FROM voluntarios WHERE id = ?", [id]);
     if (rows.length && rows[0].foto) {
       const oldPath = path.join("uploads", "voluntarios", rows[0].foto);
+      console.log("Ruta a eliminar:", oldPath);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      else console.warn(" Imagen no encontrada en el sistema de archivos:", rows[0].foto);
     }
 
-    // Eliminar registro
+    //  Borrar el voluntario
     const [result] = await c.execute("DELETE FROM voluntarios WHERE id = ?", [id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ mensaje: "Voluntario no encontrado" });
 
-    res.json({ mensaje: "Voluntario eliminado correctamente", id });
+    res.json({ mensaje: "Voluntario y asignaciones eliminados correctamente", id });
   } catch (error) {
-    res
-      .status(500)
-      .json({ mensaje: "Error al eliminar voluntario", detalle: error.message });
+    console.error("Error al eliminar voluntario:", error);
+    res.status(500).json({
+      mensaje: "Error al eliminar voluntario",
+      detalle: error.message,
+    });
   } finally {
     if (c) await desconectarDB(c);
   }
