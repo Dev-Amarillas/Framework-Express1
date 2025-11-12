@@ -3,9 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const app = express();
+const authRoutes = require('./routes/auth');
 
 app.use(cors());
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -25,12 +25,16 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// autenticaciones
+app.use('/auth', authRoutes);
+
 // rutas
 const administradoresRoutes = require('./routes/administradores');
 const areasRoutes = require('./routes/areas');
 const asignacionesRoutes = require('./routes/asignaciones');
 const movimientosRoutes = require('./routes/movimientos');
 const voluntariosRoutes = require('./routes/voluntarios');
+
 
 // rutas de API
 app.use('/administradores', administradoresRoutes);
