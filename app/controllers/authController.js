@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-// 🔹 LOGIN (autenticación)
+//  LOGIN 
 async function login(req, res) {
   const { usuario, contrasena } = req.body;
 
@@ -25,11 +25,11 @@ async function login(req, res) {
 
     const admin = rows[0];
 
-    // Comparar contraseñas (encriptadas)
+    // Comparar contraseñas ya encriptadas ajja
     const match = await bcrypt.compare(contrasena, admin.contrasena);
     if (!match) return res.status(401).json({ mensaje: "Contraseña incorrecta" });
 
-    // Crear token JWT
+    // Crea token con el jwt
     const token = jwt.sign(
       { id: admin.id, usuario: admin.usuario, correo: admin.correo },
       process.env.JWT_SECRET,
@@ -54,7 +54,7 @@ async function login(req, res) {
   }
 }
 
-// 🔹 REGISTRO (solo si quieres permitir crear desde aquí también)
+//  REGISTRO 
 async function register(req, res) {
   const { nombre, usuario, correo, contrasena } = req.body;
 
@@ -65,7 +65,7 @@ async function register(req, res) {
   try {
     c = await conectarBD();
 
-    // Verificar si ya existe
+    // Verifica si ya existe
     const [existe] = await c.execute(
       "SELECT id FROM administradores WHERE usuario = ? OR correo = ?",
       [usuario, correo]
@@ -73,7 +73,7 @@ async function register(req, res) {
     if (existe.length)
       return res.status(409).json({ mensaje: "El usuario o correo ya existe" });
 
-    // Encriptar contraseña
+    // Encripta la contraseñas
     const hash = await bcrypt.hash(contrasena, 10);
 
     const [result] = await c.execute(
